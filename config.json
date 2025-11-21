@@ -3,7 +3,7 @@
     "iconGlowColor": "000,000,000",
     "fontColor": "255,255,255",
     "backgroundBlur": 5,
-    "description": "I like hoshino",
+    "description": "𝓦𝓮𝓵𝓬𝓸𝓶𝓮",
     "version": "1.0.15 B"
   },
 
@@ -34,5 +34,6 @@
     "prev": { "text": "⏮", "size": 20, "offsetX": -1, "offsetY": -2 }
   }
 }
+
 
 
