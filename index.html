@@ -18,82 +18,6 @@ function getCacheBustedUrl(url) {
     return `${url}?t=${TIMESTAMP}`;
 }
 
-class PerformanceManager {
-    constructor() {
-        this.rafId = null;
-        this.isTabActive = true;
-        this.init();
-    }
-    
-    init() {
-        document.addEventListener('visibilitychange', () => {
-            this.isTabActive = !document.hidden;
-        });
-    }
-    
-    optimizedParallax() {
-        let lastTime = 0;
-        const fps = 30;
-        const interval = 1000 / fps;
-        
-        const animate = (time) => {
-            this.rafId = requestAnimationFrame(animate);
-            
-            if (time - lastTime < interval) return;
-            lastTime = time;
-            
-            const bg = document.getElementById('background-video');
-            if (bg && this.isTabActive) {
-                let dx = mouseX - currentX;
-                let dy = mouseY - currentY;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                let speed = dist > 270 ? 4 : dist / 270 * 4;
-                
-                if (dist > 0) {
-                    currentX += dx / dist * speed;
-                    currentY += dy / dist * speed;
-                }
-                
-                bg.style.transform = `translate3d(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px),0) scale(1.1)`;
-            }
-        };
-        
-        this.rafId = requestAnimationFrame(animate);
-    }
-    
-    cleanup() {
-        if (this.rafId) {
-            cancelAnimationFrame(this.rafId);
-        }
-    }
-}
-
-// =========================================================
-// بهینه‌ساز انیمیشن - اینجا اضافه کن
-// =========================================================
-const AnimationOptimizer = {
-    optimizeMarquee() {
-        const musicText = document.getElementById('current-music');
-        if (!musicText) return;
-        
-        setTimeout(() => {
-            const container = document.querySelector('.music-title-container');
-            if (!container) return;
-            
-            const containerWidth = container.offsetWidth;
-            const textWidth = musicText.offsetWidth;
-            
-            if (textWidth > containerWidth) {
-                musicText.style.animation = 'none';
-                musicText.style.willChange = 'transform';
-                musicText.style.animation = 'marquee 8s linear infinite alternate';
-            }
-        }, 100);
-    }
-};
-
-
-    
 // 毎回開くたびに新しいフォントが使用されるように、キャッシュを無効化する処理
 (function() {
     // @font-faceルールにキャッシュ無効化のためのクエリパラメータを追加
@@ -137,7 +61,7 @@ body,html{
 #background-video{
   position:fixed; top:50%; left:50%;
   width:110%; height:110%;
-  transform:translate3d(-50%,-50%,0) scale(1.1) translateZ(0); /* اینجا اضافه کن */
+  transform:translate3d(-50%,-50%,0) scale(1.1);
   object-fit:cover; z-index:0; will-change: transform;
   filter: blur(5px); 
 }
@@ -183,18 +107,15 @@ body,html{
 }
 
 .controls{display:flex;justify-content:flex-end;gap:15px;margin-top:10px;}
-.control-button{
-  width:35px;height:35px;border-radius:50%;border:none;background:rgba(255,255,255,0.3);
+.control-button{width:35px;height:35px;border-radius:50%;border:none;background:rgba(255,255,255,0.3);
   backdrop-filter:blur(5px);cursor:pointer;box-shadow:0 0 10px rgba(0,0,0,0.5);
-  display:flex;align-items:center;justify-content:center;transition: transform 0.1s;
-  transform: translateZ(0); /* این خط رو اضافه کن */
-}
+  display:flex;align-items:center;justify-content:center;transition: transform 0.1s;}
 
 /* ✅ 修正: ボタンのアクティブ状態に押下感を追加 */
 .control-button:active {
-    transform: translateZ(0) scale(0.95); /* اینجا scale رو به transform موجود اضافه کن */
-    filter: brightness(1.2);
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95); /* 押している間、少し小さく */
+    filter: brightness(1.2); /* 押している間、少し明るく */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); /* シャドウを弱くする */
 }
 /* -------------------------------------------------------- */
 
@@ -518,11 +439,7 @@ function showEnterScreen() {
  * @param {Function} onReady - 初期の曲のメタデータがロードされた後に実行されるコールバック
  */
 function initializeApp(cfg, onReady) {
-    // animateBackground(); // این خط رو حذف کن یا کامنت کن
-    
-    // به جای آن این کد رو اضافه کن:
-    const performanceManager = new PerformanceManager();
-    performanceManager.optimizedParallax();
+    animateBackground();
     
     const compactQuery = window.matchMedia('(max-width: 900px), (max-aspect-ratio: 1/1)');
     const glow = document.getElementById('glow');
@@ -746,11 +663,9 @@ function initializeApp(cfg, onReady) {
       audio.src = getCacheBustedUrl(list[current]);
       audio.load(); 
       
-  const songName = getSongName(list[current]);
-  currentMusicText.innerHTML = songName.replace(/[A-Za-z0-9]/g, m=>`<span class="english">${m}</span>`);
-  
-  // این خط رو اضافه کن:
-  AnimationOptimizer.optimizeMarquee(); // <-- اینجا اضافه کن
+      const songName = getSongName(list[current]);
+      currentMusicText.innerHTML = songName.replace(/[A-Za-z0-9]/g, m=>`<span class="english">${m}</span>`);
+      
       // 音楽の再生状態をshouldPlayに基づいて設定
       if (shouldPlay) { // 💡 修正: shouldPlayがtrueの場合のみ再生開始
           audio.play().then(() => {
@@ -881,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (item.icon) assetsToLoad.push(item.icon);
             });
         }
-        // 最初の音楽ファイルを追加
+        // 最初の音楽ファイルを追加 (全曲ロードすると時間がかかりすぎるため)
         if (cfg.musics && cfg.musics.length > 0) {
             assetsToLoad.push(cfg.musics[0]); 
         }
@@ -889,7 +804,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalAssets = assetsToLoad.length;
         let loadedCount = 0;
         
-        // アセットのロード関数 - اینجا تغییر کرد
+        // アセットのロード関数
         const loadAsset = (assetPath) => {
             return new Promise((resolve, reject) => {
                 const cacheBustedUrl = getCacheBustedUrl(assetPath);
@@ -898,19 +813,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (assetPath.match(/\.(png|jpg|jpeg|gif)$/i)) {
                     const img = new Image();
                     img.onload = resolve;
-                    img.onerror = resolve;
+                    img.onerror = resolve; // ロード失敗しても進行を止めない
                     img.src = cacheBustedUrl;
                 } 
-                // 音声ファイルのロード - اینجا بهینه شد
+                // 音声ファイルのロード
                 else if (assetPath.match(/\.(mp3|wav|ogg)$/i)) {
                     const audioPreload = new Audio();
-                    audioPreload.preload = 'metadata'; // تغییر مهم
-                    audioPreload.addEventListener('loadeddata', resolve, {once: true}); // تغییر از canplaythrough
+                    audioPreload.addEventListener('canplaythrough', resolve, {once: true});
                     audioPreload.addEventListener('error', resolve, {once: true});
                     audioPreload.src = cacheBustedUrl;
                     audioPreload.load();
                 } 
-                // その他のファイル
+                // その他のファイル（主にリンクアイコン以外の、念のためのもの）
                 else {
                     fetch(cacheBustedUrl).then(resolve).catch(resolve);
                 }
@@ -919,45 +833,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 const progress = (loadedCount / totalAssets) * 100;
                 loadingProgressBar.style.width = `${progress}%`;
                 
+                // パーセンテージ表示を更新
                 if (loadingPercentDisplay) {
                     loadingPercentDisplay.innerText = `${Math.round(progress)}%`;
                 }
             });
         };
         
-        // 3. 全てのアセットのロード完了を待つ
-        Promise.all(assetsToLoad.map(loadAsset)).then(() => {
+        // 3. ロードの開始
+        const assetPromises = assetsToLoad.map(loadAsset);
+
+        // 4. 全てのアセットのロード完了を待つ
+        Promise.all(assetPromises).then(() => {
+            // ゲージを100%に
             loadingProgressBar.style.width = '100%';
             if (loadingPercentDisplay) { 
-                loadingPercentDisplay.innerText = '100%';
+                loadingPercentDisplay.innerText = '100%'; // 確実に100%を表示
             }
             
+            // アプリケーションの初期化とEnter画面への遷移（フェードアニメーションあり）
             setTimeout(() => { 
+                // initializeAppを呼び出し、初期曲のメタデータロードが完了してからshowEnterScreenを呼び出す
                 initializeApp(cfg, showEnterScreen); 
             }, 100); 
         });
 
       })
       .catch(error => {
-        // خطای موجود بدون تغییر
-        console.error("Failed to load config.json. Initializing with empty settings.", error);
-        
-        const dummyConfig = { musics: [], links: [], other: { iconGlowColor: '255,255,255', fontColor: '255,255,255', description: '𝔀𝓮𝓵𝓬𝓸𝓶𝓮', version: 'v1.0' } };
-        loadingProgressBar.style.width = '100%';
-        if (loadingPercentDisplay) { 
-            loadingPercentDisplay.innerText = '100%';
-        }
-        setTimeout(() => {
-             initializeApp(dummyConfig, showEnterScreen);
-        }, 100);
-      });
-});
-      .catch(error => {
         // config.jsonのロード失敗時（致命的エラー）
         console.error("Failed to load config.json. Initializing with empty settings.", error);
         
         // エラー時でもEnter画面へ遷移
-        const dummyConfig = { musics: [], links: [], other: { iconGlowColor: '255,255,255', fontColor: '255,255,255', description: '𝔀𝓮𝓵𝓬𝓸𝓶𝓮', version: 'v1.0' } };
+        const dummyConfig = { musics: [], links: [], other: { iconGlowColor: '255,255,255', fontColor: '255,255,255', description: 'エラー: 設定を読み込めませんでした', version: 'v1.0' } };
         loadingProgressBar.style.width = '100%';
         if (loadingPercentDisplay) { 
             loadingPercentDisplay.innerText = '100%';
