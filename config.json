@@ -8,7 +8,7 @@
   },
 
   "links": [
-    {"url":"http://instagram.com/shaayan.ahm/piyodayo_intdev","icon":"x.png","shadow":5},
+    {"url":"http://instagram.com/shaayan.ahm/","icon":"x.png","shadow":5},
     {"url":"https://discordapp.com/users/niklaus0000","icon":"discord.png","shadow":5},
     {"url":"http://t.me/Thugli3e","icon":"youtube.png","shadow":5},
     {"url":"https://steamcommunity.com/id/PageThugLi3e","icon":"guns.png","shadow":5}
@@ -20,3 +20,4 @@
     "dystopiaaa.mp3"
   ]
 }
+
